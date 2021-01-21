@@ -1,6 +1,5 @@
 from lunitinterview.point.models import *
 from rest_framework import serializers
-from django.conf import settings
 
 
 class PointSerializer(serializers.ModelSerializer):
