@@ -26,7 +26,7 @@ class Contour(models.Model):
 class ContourPoint(Coordinate):
     contour = models.ForeignKey(
         Contour,
-        related_name='coordinate',
+        related_name='coordinates',
         on_delete=models.CASCADE
     )
     order = models.IntegerField()
@@ -38,3 +38,4 @@ class ContourPoint(Coordinate):
             models.CheckConstraint(check=models.Q(latitude__gte=-90), name='cp_latitude_gte_minus_90'),
             models.CheckConstraint(check=models.Q(latitude__lte=90), name='cp_latitude_lte_90'),
         ]
+        ordering = ['order']
