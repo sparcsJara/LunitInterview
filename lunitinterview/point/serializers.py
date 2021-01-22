@@ -1,4 +1,4 @@
-from lunitinterview.point.models import *
+from point.models import *
 from rest_framework import serializers
 
 
