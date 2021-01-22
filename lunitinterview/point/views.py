@@ -89,3 +89,32 @@ class ContourViewSet(viewsets.ModelViewSet):
             contour_point_serializer.is_valid(raise_exception=True)
             contour_point_serializer.save(contour=contour)
             order = order + 1
+
+    def update(self, request, *args, **kwargs):
+        partial = kwargs.pop('partial', False)
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=extract_data_from_GEOJson(request.data), partial=partial)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+
+        if getattr(instance, '_prefetched_objects_cache', None):
+            # If 'prefetch_related' has been applied to a queryset, we need to
+            # forcibly invalidate the prefetch cache on the instance.
+            instance._prefetched_objects_cache = {}
+
+        return Response(serializer.data)
+
+    def perform_update(self, serializer):
+        contour = serializer.instance
+        ContourPoint.objects.filter(contour=contour).delete()
+        coordinates = serializer.initial_data["coordinates"]
+        order = 1
+        for coordinate in coordinates:
+            contour_point = {}
+            contour_point["longitude"] = coordinate[0]
+            contour_point["latitude"] = coordinate[1]
+            contour_point["order"] = order
+            contour_point_serializer = self.contour_point_serializer(data=contour_point)
+            contour_point_serializer.is_valid(raise_exception=True)
+            contour_point_serializer.save(contour=contour)
+            order = order + 1
