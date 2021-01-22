@@ -11,7 +11,11 @@ class PointSerializer(serializers.ModelSerializer):
 class ContourPointSerializer(serializers.ModelSerializer):
     class Meta:
         model = ContourPoint
-        fields = '__all__'
+        fields =  (
+            'longitude',
+            'latitude',
+        )
+
 
 
 class ContourSerializer(serializers.ModelSerializer):
@@ -21,6 +25,5 @@ class ContourSerializer(serializers.ModelSerializer):
         model = Contour
         fields = (
             'id',
-            'stories'
+            'coordinates',
         )
-        # auto_now_add나 auto_now가 true이면 read_only_fields여야 함.
