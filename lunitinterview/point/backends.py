@@ -52,3 +52,7 @@ def extract_data_from_GEOJson(data):
         point_data["longitude"] = data["data"]["coordinates"][0]
         point_data["latitude"] = data["data"]["coordinates"][1]
         return point_data
+    elif data["data"]["type"] == GEOJSsonType.contour.value:
+        contour_data = {}
+        contour_data["coordinates"] = data["data"]["coordinates"]
+        return contour_data

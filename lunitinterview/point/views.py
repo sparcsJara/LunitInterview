@@ -50,6 +50,7 @@ class PointViewSet(viewsets.ModelViewSet):
 class ContourViewSet(viewsets.ModelViewSet):
     queryset = Contour.objects.all()
     serializer_class = ContourSerializer
+    contour_point_serializer = ContourPointCreateSerializer
 
     def list(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())
@@ -66,3 +67,25 @@ class ContourViewSet(viewsets.ModelViewSet):
         data = serializer.data
         return Response(convert_contour_to_GEOJson(serializer.data))
 
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=extract_data_from_GEOJson(request.data))
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        data = convert_contour_to_GEOJson(serializer.data)
+        data["id"] = serializer.data["id"]
+        return Response(data, status=status.HTTP_201_CREATED, headers=headers)
+
+    def perform_create(self, serializer):
+        coordinates = serializer.initial_data["coordinates"]
+        contour = serializer.save()
+        order = 1
+        for coordinate in coordinates:
+            contour_point = {}
+            contour_point["longitude"] = coordinate[0]
+            contour_point["latitude"] = coordinate[1]
+            contour_point["order"] = order
+            contour_point_serializer = self.contour_point_serializer(data=contour_point)
+            contour_point_serializer.is_valid(raise_exception=True)
+            contour_point_serializer.save(contour=contour)
+            order = order + 1

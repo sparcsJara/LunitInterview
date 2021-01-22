@@ -16,7 +16,14 @@ class ContourPointSerializer(serializers.ModelSerializer):
             'latitude',
         )
 
-
+class ContourPointCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ContourPoint
+        fields =  (
+            'longitude',
+            'latitude',
+            'order'
+        )
 
 class ContourSerializer(serializers.ModelSerializer):
     coordinates = ContourPointSerializer(many=True, read_only=True)
