@@ -15,11 +15,9 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
-
-from lunitinterview.point.routers import PointRouter
-
+from point.routers import router
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', include(PointRouter.urls)),
+    path('', include(router.urls)),
 ]

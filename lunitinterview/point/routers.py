@@ -1,16 +1,16 @@
 from django.conf.urls import url, include
 from rest_framework.routers import SimpleRouter
 
-from lunitinterview.point.views import PointViewSet, ContourViewSet
+from point.views import PointViewSet, ContourViewSet
 
-PointRouter = SimpleRouter()
+router = SimpleRouter()
 
-PointRouter.register(
+router.register(
     prefix=r'points',
     viewset=PointViewSet,
 )
 
-PointRouter.register(
+router.register(
     prefix=r'contours',
     viewset=ContourViewSet,
 )
