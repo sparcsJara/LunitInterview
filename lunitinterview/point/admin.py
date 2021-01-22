@@ -1,3 +1,6 @@
 from django.contrib import admin
+from .models import ContourPoint,Contour,Point
 
-# Register your models here.
+admin.site.register(ContourPoint)
+admin.site.register(Contour)
+admin.site.register(Point)
