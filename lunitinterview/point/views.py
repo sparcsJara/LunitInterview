@@ -1,10 +1,11 @@
 from django.shortcuts import render, get_object_or_404
+from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from rest_framework import viewsets
 
 from point.backends import convert_point_to_GEOJson, convert_contour_to_GEOJson, extract_data_from_GEOJson, \
-    check_whether_is_inside
+    check_whether_is_inside, calculate_intersection_area
 from point.serializers import *
 from rest_framework import status
 
@@ -89,7 +90,6 @@ class ContourViewSet(viewsets.ModelViewSet):
     def retrieve(self, request, pk=None):
         instance = self.get_object()
         serializer = self.get_serializer(instance)
-        data = serializer.data
         return Response(convert_contour_to_GEOJson(serializer.data))
 
     def create(self, request, *args, **kwargs):
@@ -143,3 +143,26 @@ class ContourViewSet(viewsets.ModelViewSet):
             contour_point_serializer.is_valid(raise_exception=True)
             contour_point_serializer.save(contour=contour)
             order = order + 1
+
+    @action(detail=True, url_path='intersection', url_name='intersection')
+    def intersection(self, request, pk=None):
+        instance = self.get_object()
+        contour1_id = pk
+        contour2_id = request.GET.get('contour', None)
+        if pk is None or contour2_id is None:
+            raise ValidationError("Please input contour_id")
+        try:
+            contour1 = Contour.objects.get(pk=int(contour1_id))
+        except Contour.DoesNotExist:
+            raise ValidationError("The requested contour does not exist.")
+        try:
+            contour2 = Contour.objects.get(pk=int(contour2_id))
+        except Contour.DoesNotExist:
+            raise ValidationError("The requested contour does not exist.")
+        intersection_area = calculate_intersection_area(contour1, contour2)
+        contour_list =[contour1, contour2]
+        serializer = self.get_serializer(contour_list, many=True)
+        contour_list = convert_contour_to_GEOJson(serializer.data,many=True)["contours"]
+        contour_list.append(intersection_area)
+        response_dict = {"intersections": contour_list}
+        return Response(response_dict)

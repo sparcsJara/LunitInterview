@@ -1,7 +1,7 @@
-from django.core.exceptions import ValidationError
+from rest_framework.exceptions import ValidationError
 from shapely.geometry import Polygon
 from point.GEOJson_type import GEOJSsonType
-from point.models import Contour, Point
+from point.models import Contour, Point, ContourPoint
 
 
 def convert_point_to_GEOJson(serializer_data, many=False):
@@ -62,7 +62,7 @@ def extract_data_from_GEOJson(data):
         return contour_data
 
 def check_whether_is_inside(point, contour):
-    assert isinstance(point, Point)
+    assert isinstance(point, Point) or isinstance(point, ContourPoint)
     assert isinstance(contour, Contour)
     crosses = 0
     contour_points = contour.coordinates.all()
@@ -93,7 +93,7 @@ def calculate_intersection_area(contour1, contour2):
             is_inside = True
             break
     if not is_inside:
-        raise ValidationError
+        raise ValidationError("There is no interaction between the contours.")
 
     # step 1 caluclate intersection area through shapely
     contour1_coordinates = []
