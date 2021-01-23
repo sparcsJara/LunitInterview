@@ -16,7 +16,7 @@ class PointViewSet(viewsets.ModelViewSet):
         try:
             contour = Contour.objects.get(pk=int(contour_id))
         except Contour.DoesNotExist:
-            raise ValidationError
+            raise ValidationError("The requested contour does not exist.")
         max_longitude = -180
         min_longitude = 180
         max_latitude = -90
