@@ -62,6 +62,7 @@ class PointViewSet(viewsets.ModelViewSet):
 
     def update(self, request, *args, **kwargs):
         partial = kwargs.pop('partial', False)
+        instance = None
         try:
             instance = self.get_object()
         except instance is None:
@@ -141,10 +142,7 @@ class ContourViewSet(viewsets.ModelViewSet):
         coordinates = serializer.initial_data["coordinates"]
         order = 1
         for coordinate in coordinates:
-            contour_point = {}
-            contour_point["longitude"] = coordinate[0]
-            contour_point["latitude"] = coordinate[1]
-            contour_point["order"] = order
+            contour_point = {"longitude": coordinate[0], "latitude": coordinate[1], "order": order}
             contour_point_serializer = self.contour_point_serializer(data=contour_point)
             contour_point_serializer.is_valid(raise_exception=True)
             contour_point_serializer.save(contour=contour)

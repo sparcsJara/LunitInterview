@@ -11,8 +11,7 @@ def convert_point_to_GEOJson(serializer_data, many=False):
     point_data_list = []
     for point_data in serializer_data:
         point_data_list.append(convert_single_point_to_GEOJson(point_data))
-    data = {}
-    data["points"] = point_data_list
+    data = {"points": point_data_list}
     return data
 
 
@@ -34,8 +33,7 @@ def convert_contour_to_GEOJson(serializer_data, many=False):
     return_list = []
     for contour_data in serializer_data:
         return_list.append(convert_single_contour_to_GEOJson(contour_data))
-    data = {}
-    data["contours"] = return_list
+    data = {"contours": return_list}
     return data
 
 
@@ -55,9 +53,7 @@ def convert_single_contour_to_GEOJson(serializer_data):
 
 def extract_data_from_GEOJson(data):
     if data["data"]["type"] == GEOJSsonType.point.value:
-        point_data = {}
-        point_data["longitude"] = data["data"]["coordinates"][0]
-        point_data["latitude"] = data["data"]["coordinates"][1]
+        point_data = {"longitude": data["data"]["coordinates"][0], "latitude": data["data"]["coordinates"][1]}
         return point_data
     elif data["data"]["type"] == GEOJSsonType.contour.value:
         contour_data = {}
@@ -82,7 +78,7 @@ def check_whether_is_inside(point, contour):
                     point.latitude - contour_point.latitude) * next_point.longitude) / (
                                       contour_point.latitude - next_point.latitude)
             # cross longitude 가 오른쪽 반직선과의 교점이 맞으면 교점의 개수를 증가시킴
-            if (point.longitude < cross_longitude):
+            if point.longitude < cross_longitude:
                 crosses = crosses + 1
     return (crosses % 2) == 1
 
