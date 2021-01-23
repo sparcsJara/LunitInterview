@@ -1,4 +1,5 @@
 from django.shortcuts import render, get_object_or_404
+from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from rest_framework import viewsets
 
@@ -11,31 +12,37 @@ class PointViewSet(viewsets.ModelViewSet):
     queryset = Point.objects.all()
     serializer_class = PointSerializer
 
+    def inside_quersyet(self, contour_id):
+        try:
+            contour = Contour.objects.get(pk=int(contour_id))
+        except Contour.DoesNotExist:
+            raise ValidationError
+        max_longitude = -180
+        min_longitude = 180
+        max_latitude = -90
+        min_latitude = 90
+        for contour_point in contour.coordinates.all():
+            max_longitude = max(contour_point.longitude, max_longitude)
+            min_longitude = min(contour_point.longitude, min_longitude)
+            max_latitude = max(contour_point.latitude, max_latitude)
+            min_latitude = min(contour_point.latitude, min_latitude)
+        points = Point.objects.filter(longitude__gte=min_longitude, longitude__lte=max_longitude,
+                                      latitude__gte=min_latitude, latitude__lte=max_latitude)
+        queryset = []
+        for point in points:
+            if check_whether_is_inside(point, contour):
+                queryset.append(point)
+        return queryset
+
     def list(self, request, *args, **kwargs):
         contour_id = request.GET.get('contour', None)
         if contour_id:
-            contour = get_object_or_404(Contour, pk=int(contour_id))
-            max_longitude = -180
-            min_longitude = 180
-            max_latitude = -90
-            min_latitude = 90
-            for contour_point in contour.coordinates.all():
-                max_longitude = max(contour_point.longitude, max_longitude)
-                min_longitude = min(contour_point.longitude, min_longitude)
-                max_latitude = max(contour_point.latitude, max_latitude)
-                min_latitude = min(contour_point.latitude, min_latitude)
-            points = Point.objects.filter(longitude__gte=min_longitude, longitude__lte=max_longitude,
-                                 latitude__gte=min_latitude, latitude__lte=max_latitude)
-            queryset = []
-            for point in points:
-                if check_whether_is_inside(point, contour):
-                    queryset.append(point)
+            queryset = self.inside_quersyet(contour_id)
         else:
             queryset = self.filter_queryset(self.get_queryset())
         page = self.paginate_queryset(queryset)
         serializer = self.get_serializer(page, many=True)
-        return Response(convert_point_to_GEOJson(serializer.data,many=True))
-
+        return Response(convert_point_to_GEOJson(serializer.data, many=True))
 
     def retrieve(self, request, pk=None):
         instance = self.get_object()
