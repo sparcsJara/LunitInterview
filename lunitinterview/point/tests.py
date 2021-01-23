@@ -288,9 +288,20 @@ class ContourTests(APITestCase):
                     }
 
             }
-
         self.client.post(url, data2, format='json')
 
+        data3 = {
+            "data":
+                {
+                    "type": "Polygon",
+                    "coordinates": [
+                        [30, 0.0], [40.0, 0.0], [40.0, 20.0], [30, 20.0]
+                    ]
+                }
+
+        }
+
+        self.client.post(url, data3, format='json')
 
 
     def test_create_contour(self):
@@ -373,4 +384,37 @@ class ContourTests(APITestCase):
         response = self.client.delete(url, format='json')
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
 
+    def test_intersection(self):
+        expected_data = {
+            "intersections": [
+                {
+                    "id": 1,
+                    "data": {
+                        "type": "Polygon",
+                        "coordinates": [[0.0, 0.0], [10.0,0.0],[10.0,20.0],[0.0,20.0]]
+                    }
+                },
+                {
+                    "id": 2,
+                    "data":{
+                        "type": "Polygon",
+                        "coordinates": [[20.0, 0.0], [5.0, 5.0], [20.0, 10.0], [5, 15], [20, 20], [30, 10]]
+                        }
+                },
+                16.66666666666667
+            ]
+        }
+        url = "/contours/1/intersection?contour=2"
+        redirect_url = "/contours/1/intersection/?contour=2"
+        response = self.client.get(url, format='json')
+        self.assertRedirects(response, redirect_url, status_code=301, target_status_code=200)
+        response = self.client.get(redirect_url, format='json')
+        self.assertEqual(response.data, expected_data)
 
+    def test_intersection_validataion_error(self):
+        url = "/contours/1/intersection?contour=3"
+        redirect_url = "/contours/1/intersection/?contour=3"
+        response = self.client.get(url, format='json')
+        self.assertRedirects(response, redirect_url, status_code=301, target_status_code=400)
+        response = self.client.get(redirect_url, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
