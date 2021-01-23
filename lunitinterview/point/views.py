@@ -1,8 +1,9 @@
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404
 from rest_framework.response import Response
 from rest_framework import viewsets
 
-from point.backends import convert_point_to_GEOJson, convert_contour_to_GEOJson, extract_data_from_GEOJson
+from point.backends import convert_point_to_GEOJson, convert_contour_to_GEOJson, extract_data_from_GEOJson, \
+    check_whether_is_inside
 from point.serializers import *
 from rest_framework import status
 
@@ -11,13 +12,30 @@ class PointViewSet(viewsets.ModelViewSet):
     serializer_class = PointSerializer
 
     def list(self, request, *args, **kwargs):
-        queryset = self.filter_queryset(self.get_queryset())
+        contour_id = request.GET.get('contour', None)
+        if contour_id:
+            contour = get_object_or_404(Contour, pk=int(contour_id))
+            max_longitude = -180
+            min_longitude = 180
+            max_latitude = -90
+            min_latitude = 90
+            for contour_point in contour.coordinates.all():
+                max_longitude = max(contour_point.longitude, max_longitude)
+                min_longitude = min(contour_point.longitude, min_longitude)
+                max_latitude = max(contour_point.latitude, max_latitude)
+                min_latitude = min(contour_point.latitude, min_latitude)
+            points = Point.objects.filter(longitude__gte=min_longitude, longitude__lte=max_longitude,
+                                 latitude__gte=min_latitude, latitude__lte=max_latitude)
+            queryset = []
+            for point in points:
+                if check_whether_is_inside(point, contour):
+                    queryset.append(point)
+        else:
+            queryset = self.filter_queryset(self.get_queryset())
         page = self.paginate_queryset(queryset)
-        if page is not None:
-            serializer = self.get_serializer(page, many=True)
-            return Response(convert_point_to_GEOJson(serializer.data,many=True))
-        serializer = self.get_serializer(queryset, many=True)
-        return Response(convert_point_to_GEOJson(serializer.data))
+        serializer = self.get_serializer(page, many=True)
+        return Response(convert_point_to_GEOJson(serializer.data,many=True))
+
 
     def retrieve(self, request, pk=None):
         instance = self.get_object()

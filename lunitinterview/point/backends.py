@@ -65,16 +65,17 @@ def check_whether_is_inside(point, contour):
     assert isinstance(point, Point)
     assert isinstance(contour, Contour)
     crosses = 0
-    for i in range(0,len(contour.coordinates)):
+    contour_points = contour.coordinates.all()
+    for i in range(0,len(contour_points)):
 
-        j = (i+1) % len(contour.coordinates)
-        contour_point = contour.coordinates[i]
-        next_point = contour.coordinates[j]
+        j = (i+1) % len(contour_points)
+        contour_point = contour_points[i]
+        next_point = contour_points[j]
         # point가 선분 [contour_point와 next_point를 잇는 선분]의 latitude 범위 사이에 있음
         if (contour_point.latitude > point.latitude) != (next_point.latitude > point.latitude):
             # cross longitude는 point를 지나는 수평선과 선분의 교점
-            cross_longitude = (next_point.longitude- contour_point.longitude) * (point.latitude-contour_point.longitude) / (next_point.latitude-contour_point.latitude)+contour_point.longitude
-            # cross longitude 가 오른쪽 반직선과의 교점이 맞으면 교점의 개수를 증가시킨다.
+            cross_longitude = ((point.latitude-next_point.latitude)*contour_point.longitude-(point.latitude-contour_point.latitude)*next_point.longitude)/(contour_point.latitude-next_point.latitude)
+            # cross longitude 가 오른쪽 반직선과의 교점이 맞으면 교점의 개수를 증가시킴
             if (point.longitude < cross_longitude):
                 crosses = crosses + 1
     return (crosses % 2) == 1
@@ -85,7 +86,9 @@ def calculate_intersection_area(contour1, contour2):
 
     is_inside = False
     # step 0: check whether there is a intersection between them
-    for contour_point in contour2.coordinates:
+    contour_points1 = contour1.coordinates.all()
+    contour_points2 = contour2.coordinates.all()
+    for contour_point in contour_points2:
         if check_whether_is_inside(contour_point, contour1):
             is_inside = True
             break
@@ -94,10 +97,10 @@ def calculate_intersection_area(contour1, contour2):
 
     # step 1 caluclate intersection area through shapely
     contour1_coordinates = []
-    for contour_point in contour1.coordinates:
+    for contour_point in contour_points1:
         contour1_coordinates.append([contour_point.longitude,contour_point.latitude])
     contour2_coordinates = []
-    for contour_point in contour2.coordinates:
+    for contour_point in contour_points2:
         contour2_coordinates.append([contour_point.longitude, contour_point.latitude])
     contour1_polygon = Polygon(contour1_coordinates)
     contour2_polygon = Polygon(contour2_coordinates)
