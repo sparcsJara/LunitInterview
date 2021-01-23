@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'point.apps.PointConfig',
     'rest_framework',
+    'drf_yasg',
 ]
 
 MIDDLEWARE = [
