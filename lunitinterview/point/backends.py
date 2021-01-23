@@ -1,4 +1,6 @@
 from point.GEOJson_type import GEOJSsonType
+from point.models import Contour, Point
+
 
 def convert_point_to_GEOJson(serializer_data, many=False):
     if many is False:
@@ -56,3 +58,22 @@ def extract_data_from_GEOJson(data):
         contour_data = {}
         contour_data["coordinates"] = data["data"]["coordinates"]
         return contour_data
+
+def check_whether_is_inside(point, contour):
+    assert isinstance(point, Point)
+    assert isinstance(contour, Contour)
+    crosses = 0
+    for i in range(0,len(contour.coordinates)):
+
+        j = (i+1) % len(contour.coordinates)
+        contour_point = contour.coordinates[i]
+        next_point = contour.coordinates[j]
+        # point가 선분 [contour_point와 next_point를 잇는 선분]의 latitude 범위 사이에 있음
+        if (contour_point.latitude > point.latitude) != (next_point.latitude > point.latitude):
+            # cross longitude는 point를 지나는 수평선과 선분의 교점
+            cross_longitude = (next_point.longitude- contour_point.longitude) * (point.latitude-contour_point.longitude) / (next_point.latitude-contour_point.latitude)+contour_point.longitude
+            # cross longitude 가 오른쪽 반직선과의 교점이 맞으면 교점의 개수를 증가시킨다.
+            if (point.longitude < cross_longitude):
+                crosses = crosses + 1
+    return (crosses % 2) == 1
+
