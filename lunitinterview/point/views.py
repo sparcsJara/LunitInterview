@@ -1,4 +1,3 @@
-from django.shortcuts import render, get_object_or_404
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
@@ -9,11 +8,13 @@ from point.backends import convert_point_to_GEOJson, convert_contour_to_GEOJson,
 from point.serializers import *
 from rest_framework import status
 
+
 class PointViewSet(viewsets.ModelViewSet):
     queryset = Point.objects.all()
     serializer_class = PointSerializer
 
-    def inside_quersyet(self, contour_id):
+    @staticmethod
+    def inside_quersyet(contour_id):
         try:
             contour = Contour.objects.get(pk=int(contour_id))
         except Contour.DoesNotExist:
@@ -45,7 +46,7 @@ class PointViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(page, many=True)
         return Response(convert_point_to_GEOJson(serializer.data, many=True))
 
-    def retrieve(self, request, pk=None):
+    def retrieve(self, request, pk=None, **kwargs):
         instance = self.get_object()
         serializer = self.get_serializer(instance)
         return Response(convert_point_to_GEOJson(serializer.data))
@@ -77,6 +78,7 @@ class PointViewSet(viewsets.ModelViewSet):
         data["id"] = serializer.data["id"]
         return Response(data)
 
+
 class ContourViewSet(viewsets.ModelViewSet):
     queryset = Contour.objects.all()
     serializer_class = ContourSerializer
@@ -87,11 +89,11 @@ class ContourViewSet(viewsets.ModelViewSet):
         page = self.paginate_queryset(queryset)
         if page is not None:
             serializer = self.get_serializer(page, many=True)
-            return Response(convert_contour_to_GEOJson(serializer.data,many=True))
+            return Response(convert_contour_to_GEOJson(serializer.data, many=True))
         serializer = self.get_serializer(queryset, many=True)
         return Response(convert_contour_to_GEOJson(serializer.data))
 
-    def retrieve(self, request, pk=None):
+    def retrieve(self, request, pk=None, **kwargs):
         instance = self.get_object()
         serializer = self.get_serializer(instance)
         return Response(convert_contour_to_GEOJson(serializer.data))
@@ -107,13 +109,10 @@ class ContourViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         coordinates = serializer.initial_data["coordinates"]
-        contour = serializer.save()
+        contour: Contour = serializer.save()
         order = 1
         for coordinate in coordinates:
-            contour_point = {}
-            contour_point["longitude"] = coordinate[0]
-            contour_point["latitude"] = coordinate[1]
-            contour_point["order"] = order
+            contour_point = {"longitude": coordinate[0], "latitude": coordinate[1], "order": order}
             contour_point_serializer = self.contour_point_serializer(data=contour_point)
             contour_point_serializer.is_valid(raise_exception=True)
             contour_point_serializer.save(contour=contour)
@@ -153,7 +152,6 @@ class ContourViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, url_path='intersection', url_name='intersection')
     def intersection(self, request, pk=None):
-        instance = self.get_object()
         contour1_id = pk
         contour2_id = request.GET.get('contour', None)
         if pk is None or contour2_id is None:
@@ -167,9 +165,9 @@ class ContourViewSet(viewsets.ModelViewSet):
         except Contour.DoesNotExist:
             raise ValidationError("The requested contour does not exist.")
         intersection_area = calculate_intersection_area(contour1, contour2)
-        contour_list =[contour1, contour2]
+        contour_list = [contour1, contour2]
         serializer = self.get_serializer(contour_list, many=True)
-        contour_list = convert_contour_to_GEOJson(serializer.data,many=True)["contours"]
+        contour_list = convert_contour_to_GEOJson(serializer.data, many=True)["contours"]
         contour_list.append(intersection_area)
         response_dict = {"intersections": contour_list}
         return Response(response_dict)

@@ -15,6 +15,7 @@ def convert_point_to_GEOJson(serializer_data, many=False):
     data["points"] = point_data_list
     return data
 
+
 def convert_single_point_to_GEOJson(serializer_data):
     data = {}
     GEOJson_data = {}
@@ -37,6 +38,7 @@ def convert_contour_to_GEOJson(serializer_data, many=False):
     data["contours"] = return_list
     return data
 
+
 def convert_single_contour_to_GEOJson(serializer_data):
     data = {}
     GEOJson_data = {}
@@ -50,6 +52,7 @@ def convert_single_contour_to_GEOJson(serializer_data):
     data["data"] = GEOJson_data
     return data
 
+
 def extract_data_from_GEOJson(data):
     if data["data"]["type"] == GEOJSsonType.point.value:
         point_data = {}
@@ -61,24 +64,28 @@ def extract_data_from_GEOJson(data):
         contour_data["coordinates"] = data["data"]["coordinates"]
         return contour_data
 
+
 def check_whether_is_inside(point, contour):
     assert isinstance(point, Point) or isinstance(point, ContourPoint)
     assert isinstance(contour, Contour)
     crosses = 0
     contour_points = contour.coordinates.all()
-    for i in range(0,len(contour_points)):
+    for i in range(0, len(contour_points)):
 
-        j = (i+1) % len(contour_points)
+        j = (i + 1) % len(contour_points)
         contour_point = contour_points[i]
         next_point = contour_points[j]
         # point가 선분 [contour_point와 next_point를 잇는 선분]의 latitude 범위 사이에 있음
         if (contour_point.latitude > point.latitude) != (next_point.latitude > point.latitude):
             # cross longitude는 point를 지나는 수평선과 선분의 교점
-            cross_longitude = ((point.latitude-next_point.latitude)*contour_point.longitude-(point.latitude-contour_point.latitude)*next_point.longitude)/(contour_point.latitude-next_point.latitude)
+            cross_longitude = ((point.latitude - next_point.latitude) * contour_point.longitude - (
+                    point.latitude - contour_point.latitude) * next_point.longitude) / (
+                                      contour_point.latitude - next_point.latitude)
             # cross longitude 가 오른쪽 반직선과의 교점이 맞으면 교점의 개수를 증가시킴
             if (point.longitude < cross_longitude):
                 crosses = crosses + 1
     return (crosses % 2) == 1
+
 
 def calculate_intersection_area(contour1, contour2):
     assert isinstance(contour1, Contour)
@@ -98,7 +105,7 @@ def calculate_intersection_area(contour1, contour2):
     # step 1 caluclate intersection area through shapely
     contour1_coordinates = []
     for contour_point in contour_points1:
-        contour1_coordinates.append([contour_point.longitude,contour_point.latitude])
+        contour1_coordinates.append([contour_point.longitude, contour_point.latitude])
     contour2_coordinates = []
     for contour_point in contour_points2:
         contour2_coordinates.append([contour_point.longitude, contour_point.latitude])
