@@ -70,8 +70,9 @@ class PointViewSet(viewsets.ModelViewSet):
             # If 'prefetch_related' has been applied to a queryset, we need to
             # forcibly invalidate the prefetch cache on the instance.
             instance._prefetched_objects_cache = {}
-
-        return Response(serializer.data)
+        data = convert_contour_to_GEOJson(serializer.data)
+        data["id"] = serializer.data["id"]
+        return Response(data)
 
 class ContourViewSet(viewsets.ModelViewSet):
     queryset = Contour.objects.all()
@@ -127,7 +128,10 @@ class ContourViewSet(viewsets.ModelViewSet):
             # forcibly invalidate the prefetch cache on the instance.
             instance._prefetched_objects_cache = {}
 
-        return Response(serializer.data)
+        data = convert_contour_to_GEOJson(serializer.data)
+        data["id"] = serializer.data["id"]
+
+        return Response(data)
 
     def perform_update(self, serializer):
         contour = serializer.instance
