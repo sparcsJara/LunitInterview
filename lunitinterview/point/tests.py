@@ -127,6 +127,15 @@ class PointTests(APITestCase):
             }
             self.client.post(url, data, format='json')
 
+        url = reverse('contour-list')
+        data = {
+            "data" :
+            {   "type": "Polygon",
+                "coordinates": [[25, 10.0], [-10, 10], [-10, -10],[25,-10]]
+            }
+        }
+        self.client.post(url, data, format='json')
+
     def test_create_point(self):
         """
         Ensure we can create a point object.
@@ -212,3 +221,75 @@ class PointTests(APITestCase):
         response = self.client.patch(url, data, format='json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data, expected_data)
+
+    def test_delete_single_point(self):
+        """
+        Ensure we can delete a single point.
+        """
+        url = "/points/1/"
+        response = self.client.delete(url, format='json')
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+
+    def test_inside_api(self):
+
+        data = {"points":[{
+            "id": 1,
+            "data": {
+                "type": "Point",
+                "coordinates": [0,0]
+            }},
+            {
+                "id": 2,
+                "data": {
+                    "type": "Point",
+                    "coordinates": [10, 0]
+                }},
+            {
+                "id": 3,
+                "data": {
+                    "type": "Point",
+                    "coordinates": [20, 0]
+                }}
+        ]}
+        url = "/points?contour=1"
+        redirect_url = '/points/?contour=1'
+        response = self.client.get(url, format='json')
+        self.assertRedirects(response, redirect_url, status_code=301, target_status_code=200)
+        response = self.client.get(redirect_url, format='json')
+        self.assertEqual(response.data, data)
+
+    def test_inside_api(self):
+
+        data = {"points":[{
+            "id": 1,
+            "data": {
+                "type": "Point",
+                "coordinates": [0,0]
+            }},
+            {
+                "id": 2,
+                "data": {
+                    "type": "Point",
+                    "coordinates": [10, 0]
+                }},
+            {
+                "id": 3,
+                "data": {
+                    "type": "Point",
+                    "coordinates": [20, 0]
+                }}
+        ]}
+        url = "/points?contour=1"
+        redirect_url = '/points/?contour=1'
+        response = self.client.get(url, format='json')
+        self.assertRedirects(response, redirect_url, status_code=301, target_status_code=200)
+        response = self.client.get(redirect_url, format='json')
+        self.assertEqual(response.data, data)
+
+    def test_inside_api_validation_error(self):
+        url = "/points?contour=2"
+        redirect_url = '/points/?contour=2'
+        response = self.client.get(url, format='json')
+        self.assertRedirects(response, redirect_url, status_code=301, target_status_code=400)
+        response = self.client.get(redirect_url, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)

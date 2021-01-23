@@ -61,7 +61,10 @@ class PointViewSet(viewsets.ModelViewSet):
 
     def update(self, request, *args, **kwargs):
         partial = kwargs.pop('partial', False)
-        instance = self.get_object()
+        try:
+            instance = self.get_object()
+        except instance is None:
+            raise ValidationError("The requested point does not exist.")
         serializer = self.get_serializer(instance, data=extract_data_from_GEOJson(request.data), partial=partial)
         serializer.is_valid(raise_exception=True)
         self.perform_update(serializer)
@@ -70,7 +73,7 @@ class PointViewSet(viewsets.ModelViewSet):
             # If 'prefetch_related' has been applied to a queryset, we need to
             # forcibly invalidate the prefetch cache on the instance.
             instance._prefetched_objects_cache = {}
-        data = convert_contour_to_GEOJson(serializer.data)
+        data = convert_point_to_GEOJson(serializer.data)
         data["id"] = serializer.data["id"]
         return Response(data)
 
